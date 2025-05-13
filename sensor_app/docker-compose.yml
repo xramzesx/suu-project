@@ -7,7 +7,7 @@ services:
   grpc-server:
     build:
       context: .
-      dockerfile: Dockerfile.server
+      dockerfile: Dockerfile
     networks:
       - grpc-network
     ports:
@@ -16,11 +16,12 @@ services:
       - ./certs:/app/certs
     environment:
       - GRPC_VERBOSITY=debug
+    command: src/server.py
 
   grpc-client:
     build:
       context: .
-      dockerfile: Dockerfile.client
+      dockerfile: Dockerfile
     networks:
       - grpc-network
     depends_on:
@@ -29,3 +30,4 @@ services:
       - ./certs:/app/certs
     environment:
       - GRPC_VERBOSITY=debug
+    command: src/client.py
