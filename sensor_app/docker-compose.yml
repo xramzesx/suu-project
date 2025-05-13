@@ -1,0 +1,31 @@
+version: "3.9"
+
+networks:
+  grpc-network:
+
+services:
+  grpc-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    networks:
+      - grpc-network
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./certs:/app/certs
+    environment:
+      - GRPC_VERBOSITY=debug
+
+  grpc-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    networks:
+      - grpc-network
+    depends_on:
+      - grpc-server
+    volumes:
+      - ./certs:/app/certs
+    environment:
+      - GRPC_VERBOSITY=debug
