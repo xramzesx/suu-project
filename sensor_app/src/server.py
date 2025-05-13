@@ -1,8 +1,7 @@
 import grpc
 from concurrent import futures
 import time
-import sensor_pb2
-import sensor_pb2_grpc
+from proto import sensor_pb2, sensor_pb2_grpc
 from health_check import add_health_check
 from tracing import setup_tracing
 from auth import check_token

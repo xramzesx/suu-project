@@ -1,6 +1,5 @@
 import grpc
-import sensor_pb2
-import sensor_pb2_grpc
+from proto import sensor_pb2, sensor_pb2_grpc
 import time
 
 

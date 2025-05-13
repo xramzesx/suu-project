@@ -4,7 +4,9 @@ WORKDIR /app
 
 COPY . .
 
-RUN pip install --no-cache-dir -r requirements.txt \
-    && python -m grpc_tools.protoc -I. --python_out=. --grpc_python_out=. sensor.proto
+RUN apt-get update -y && apt-get install make -y
 
-CMD ["python", "server.py"]
+RUN pip install --no-cache-dir -r requirements.txt \
+    && make generate_proto
+
+CMD ["python", "src/server.py"]

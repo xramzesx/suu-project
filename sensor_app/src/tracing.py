@@ -3,6 +3,7 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
 from opentelemetry.instrumentation.grpc import GrpcInstrumentorServer
 
+
 def setup_tracing():
     trace.set_tracer_provider(TracerProvider())
     tracer = trace.get_tracer_provider().get_tracer(__name__)
