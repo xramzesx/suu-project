@@ -1,0 +1,13 @@
+scipy
+scikit-learn
+numpy
+pandas
+prisma==0.15.0
+python-dotenv
+tqdm
+more-itertools
+black
+grpcio
+protobuf
+pylint
+isort

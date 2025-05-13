@@ -1,0 +1,13 @@
+version: '3.9'
+
+services:
+  asset:
+    image: gymu.asset.service:prod
+    command: prod
+  api:
+    image: gymu.api.service:prod
+    command: prod
+    
+  analyze:
+    image: gymu.analyze.service:prod
+    command: prod

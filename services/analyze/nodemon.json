@@ -1,0 +1,4 @@
+{
+    "watch" : ["main.py", "src/"],
+    "ext": "py"
+}

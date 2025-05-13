@@ -1,0 +1,111 @@
+version: '3.9'
+
+name: "gymu"
+
+networks:
+  gymu.network:
+
+volumes:
+  postgres-db-volume:
+
+secrets:
+  postgres_db:
+    file: ./secrets/postgres_db.txt
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  postgres_user:
+    file: ./secrets/postgres_user.txt
+  asset_service_password:
+    file: ./secrets/asset_service_password.txt
+
+services:
+    postgres:
+      image: postgres:latest
+      restart: always
+      container_name: postgres.service
+      ports: 
+        - 5432:5432
+      volumes:
+        # Uncomment line below to persistence sql results in database
+        # - postgres-db-volume:/var/lib/postgresql/data
+
+        ### SETUP SCRIPTS ###
+        - ./postgres/setup.sh:/docker-entrypoint-initdb.d/setup.sh
+        
+      environment:
+        - POSTGRES_DB_FILE=/run/secrets/postgres_db
+        - POSTGRES_USER_FILE=/run/secrets/postgres_user
+        - POSTGRES_PASSWORD_FILE=/run/secrets/postgres_password
+
+      secrets:
+        - postgres_db
+        - postgres_password
+        - postgres_user
+
+      networks:
+        - gymu.network
+
+    asset:
+      image: gymu.asset.service:latest
+      build: 
+        context: ./asset
+        dockerfile: Dockerfile
+      container_name: asset.service
+      volumes:
+        - ./asset/src:/app/src
+      ports:
+        - 4000:4000
+      secrets:
+        - asset_service_password
+      networks:
+        - gymu.network
+
+    api:
+      image: gymu.api.service:latest
+      build: 
+        context: ./api
+        dockerfile: Dockerfile
+      depends_on:
+        - postgres
+        - asset
+      container_name: api.service
+      volumes:
+        - ./api/src:/app/src
+      ports:
+        - 3000:3000
+        - 5555:5555
+      environment:
+        - GRPC_HOST=analyze.service
+        - GRPC_PORT=50051
+        - DATABASE_ADDRESS=postgres.service
+      secrets:
+        - postgres_db
+        - postgres_password
+        - postgres_user
+        - asset_service_password
+      networks:
+        - gymu.network
+
+    analyze:
+      image: gymu.analyze.service:latest
+      build:
+        context: ./analyze
+        dockerfile: Dockerfile
+      volumes:
+        - ./analyze/src:/app/src
+        - ./analyze/main.py:/app/main.py
+      depends_on:
+        - postgres
+        - api
+      container_name: analyze.service
+      ports:
+        - 3001:50051
+      environment:
+        - GRPC_PORT=50051
+        - DATABASE_ADDRESS=postgres.service
+      secrets:
+        - postgres_db
+        - postgres_password
+        - postgres_user
+      networks:
+        - gymu.network

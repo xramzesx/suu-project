@@ -1,0 +1,11 @@
+{
+  "name": "@gymu/proto",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build:python": "sh ./scripts/build.python.sh",
+    "build:node": "sh ./scripts/build.node.sh",
+    "build": "yarn build:python && yarn build:node",
+    "setup" : "sh ./scripts/setup.sh"
+  }
+}
