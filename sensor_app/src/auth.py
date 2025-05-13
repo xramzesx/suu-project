@@ -2,6 +2,7 @@ import grpc
 
 VALID_TOKENS = {"sensor_token_abc"}
 
+
 def check_token(context):
     metadata = dict(context.invocation_metadata())
     token = metadata.get("authorization")
