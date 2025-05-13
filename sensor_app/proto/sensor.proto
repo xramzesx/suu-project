@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+service SensorService {
+  rpc SendSingleReading (SensorReading) returns (Ack);
+  rpc StreamSensorReadings (stream SensorReading) returns (Ack);
+  rpc GetSensorReadings (SensorRequest) returns (stream SensorReading);
+  rpc SensorChat (stream SensorReading) returns (stream ServerMessage);
+}
+
+message SensorReading {
+  string sensor_id = 1;
+  double temperature = 2;
+  int64 timestamp = 3;
+}
+
+message Ack {
+  string message = 1;
+}
+
+message SensorRequest {
+  string sensor_id = 1;
+}
+
+message ServerMessage {
+  string message = 1;
+  int64 server_time = 2;
+}
