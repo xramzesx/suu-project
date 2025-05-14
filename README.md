@@ -57,15 +57,7 @@ OpenTelemetry to uniwersalny zestaw narzędzi, API i SDK do instrumentacji, zbie
 
 OpenTelemetry dla Pythona zapewnia natywną integrację m.in. z frameworkami sieciowymi, w tym z gRPC, co umożliwia łatwe śledzenie przepływu danych i monitorowanie działania aplikacji w czasie rzeczywistym.
 
-W ramach studium przypadku zostanie zaimplementowany prosty system klient-serwer w Pythonie z użyciem gRPC. Serwer będzie udostępniał usługę obliczeniową (np. prostą operację matematyczną), a klient będzie wysyłał żądania oraz odbierał odpowiedzi. Obie strony komunikacji zostaną zainstrumentowane przy użyciu OpenTelemetry, aby umożliwić zbieranie i wizualizację:
-
-- śladów przesyłanych żądań,
-
-- metryk dotyczących liczby obsłużonych żądań i czasu odpowiedzi,
-
-- logów błędów i zdarzeń.
-
-Dane telemetryczne będą eksportowane do wybranego backendu, np. Jaeger (dla traces) oraz Prometheus/Grafana (dla metrics), co pozwoli na monitorowanie działania systemu w czasie rzeczywistym.
+W ramach studium przypadku implementujemy system zbierania odczytów z czujników temperatury. Aplikację budujemy w architekturze klient–serwer, korzystając z gRPC, a dane telemetryczne eksportujemy do Jaegera (traces) oraz Prometheusa/Grafany (metrics).
 
 ## Architektura rozwiązania
 
