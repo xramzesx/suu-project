@@ -142,6 +142,35 @@ Klient łączy się z serwerem gRPC poprzez bezpieczny kanał TLS, przekazując 
 ## Konfiguracja środowiska
 
 ## Sposób instalacji, uruchomienie środowiska
+1. Kopiowanie projektu na lokalny komputer
+   
+   ```git clone git@github.com:xramzesx/suu-project.git```
+
+3. Przejście do folderu z projektem
+   
+   ```cd suu-projekt/sensor_app```
+
+5. Instalacja wymaganych pakietów
+   
+   ``` pip install -r requirements.txt ```
+
+7. Generowanie certyfikatów
+   
+   ``` make generate_certs ```
+
+9. Generowanie pliku proto
+    
+   ``` make generate_proto ```
+
+11. Uruchomienie kontenerów
+    
+    ``` docker compose up --build ```
+
+W wyniku wykonania powyższej komendy zostaną zbudowane 4 kontenery:
+- grpc-client
+- grpc-server
+- sensor_app-grpc-client-1
+- sensor_app-grpc-server-1
 
 ## Użycie AI w projekcie
 
