@@ -25,18 +25,13 @@ Python umożliwia łatwe tworzenie zarówno serwerów, jak i klientów gRPC. Za 
 
 - Klient wysyła pojedynczy komunikat, serwer zwraca pojedynczą odpowiedź.
 
-- Implementacja w repo: SensorService.SendSingleReading() • test_unary()
-
 #### Server‑streaming (request → stream(response))
 
 - Klient wysyła jedno żądanie, serwer odsyła strumień wielu komunikatów.
 
-- Implementacja w repo: SensorService.GetSensorReadings() • test_server_streaming()
-
 #### Client‑streaming (stream(request) → response)
 
 - Klient wysyła strumień komunikatów, serwer zwraca jedno podsumowanie.
-
 
 #### Bidirectional‑streaming (stream(request) ⇄ stream(response))
 
