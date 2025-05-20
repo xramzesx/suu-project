@@ -37,13 +37,73 @@ Python umożliwia łatwe tworzenie zarówno serwerów, jak i klientów gRPC. Za 
 
 - Klient wysyła strumień komunikatów, serwer zwraca jedno podsumowanie.
 
-- Implementacja w repo: SensorService.StreamSensorReadings() • test_client_streaming()
 
 #### Bidirectional‑streaming (stream(request) ⇄ stream(response))
 
 - Obie strony wymieniają komunikaty niezależnie i równolegle.
 
-- Implementacja w repo: SensorService.SensorChat() • test_bidirectional_streaming()
+### Opisanie pliku proto
+Plik .proto opisuje interfejs usługi gRPC w wersji proto3 oraz formaty wiadomości, jakimi klient i serwer będą się ze sobą wymieniać. Poniżej omówienie jego poszczególnych elementów:
+
+`syntax = "proto3";`
+
+Używamy proto3 – najnowszej, uproszczonej wersji języka Protocol Buffers.
+
+`service SensorService {
+  rpc SendSingleReading (SensorReading) returns (Ack);
+  rpc StreamSensorReadings (stream SensorReading) returns (Ack);
+  rpc GetSensorReadings (SensorRequest) returns (stream SensorReading);
+  rpc SensorChat (stream SensorReading) returns (stream ServerMessage);
+}`
+
+SensorService to nazwa usługi oferowanej przez serwer.
+- Każda metoda (rpc) określa:
+- nazwę RPC,
+- typ argumentu (po stronie klienta),
+- typ odpowiedzi (po stronie serwera).
+
+Możliwe tryby transmisji:
+1. Unary: pojedyncze żądanie → pojedyncza odpowiedź
+- SendSingleReading(SensorReading) → Ack
+2.	Client streaming: strumień żądań → pojedyncza odpowiedź
+- StreamSensorReadings(stream SensorReading) → Ack
+3.	Server streaming: pojedyncze żądanie → strumień odpowiedzi
+- GetSensorReadings(SensorRequest) → stream SensorReading
+4.	Bidirectional streaming: strumień żądań ↔ strumień odpowiedzi
+- SensorChat(stream SensorReading) → stream ServerMessage
+
+`message SensorReading {
+  string sensor_id = 1;
+  double temperature = 2;
+  int64 timestamp = 3;
+}`
+
+SensorReading reprezentuje odczyt z czujnika.
+- sensor_id (pole 1): unikalny identyfikator czujnika.
+- temperature (pole 2): wartość temperatury (zmiennoprzecinkowa).
+- timestamp (pole 3): znacznik czasu (liczba całkowita 64-bitowa), np. sekundy od epoki.
+
+`message Ack {
+  string message = 1;
+}`
+
+Ack potwierdza otrzymanie danych, zawiera krótki komunikat tekstowy.
+
+`message SensorRequest {
+  string sensor_id = 1;
+}`
+
+SensorRequest to żądanie dotyczące konkretnego czujnika (np. pobranie historii odczytów)
+
+`message ServerMessage {
+  string message = 1;
+  int64 server_time = 2;
+}`
+
+Komunikat serwera, wysyłany w trybie strumieniowym.
+- message: treść (np. status lub alert).
+- server_time: czas na serwerze (np. dla synchronizacji).
+
 
 ### OTEL
 
