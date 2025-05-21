@@ -1,12 +1,17 @@
 # Środowiska Udostępniania Usług - projekt
+
 Temat projektu: Python - gRPC - OTel
 
-Autorzy: Michał Bert, Jakub Kędra, Aleksandra Sobiesiak, Adrian Stahl 
+Autorzy: Michał Bert, Jakub Kędra, Aleksandra Sobiesiak, Adrian Stahl
+
 ## Wprowadzenie
+
 Celem niniejszego projektu jest przedstawienie nowoczesnego, wydajnego frameworka do zdalnego wywoływania procedur (RPC) – gRPC – oraz jego zastosowania w ekosystemie Pythona. Raport obejmuje również omówienie narzędzi do obserwowalności systemów rozproszonych, skupiając się na OpenTelemetry, które umożliwia zbieranie metryk, logów i śladów (traces) z aplikacji. W ramach studium przypadku zostanie zaprezentowany prosty system klient-serwer oparty o gRPC, wzbogacony o mechanizmy monitorowania z wykorzystaniem OpenTelemetry.
+
 ## Opis przypadku, stack technologiczny
 
 ### gRPC
+
 gRPC to otwartoźródłowy framework RPC opracowany przez Google, który opiera się na protokole HTTP/2 i formacie serializacji danych Protocol Buffers (Protobuf). Dzięki temu zapewnia wysoką wydajność, niski narzut sieciowy oraz wsparcie dla zaawansowanych funkcji, takich jak:
 
 - transmisja strumieniowa (streaming) w obu kierunkach,
@@ -38,67 +43,108 @@ Python umożliwia łatwe tworzenie zarówno serwerów, jak i klientów gRPC. Za 
 - Obie strony wymieniają komunikaty niezależnie i równolegle.
 
 ### Opisanie pliku proto
+
 Plik .proto opisuje interfejs usługi gRPC w wersji proto3 oraz formaty wiadomości, jakimi klient i serwer będą się ze sobą wymieniać. Poniżej omówienie jego poszczególnych elementów:
 
 `syntax = "proto3";`
 
 Używamy proto3 – najnowszej, uproszczonej wersji języka Protocol Buffers.
 
-`service SensorService {
-  rpc SendSingleReading (SensorReading) returns (Ack);
-  rpc StreamSensorReadings (stream SensorReading) returns (Ack);
-  rpc GetSensorReadings (SensorRequest) returns (stream SensorReading);
-  rpc SensorChat (stream SensorReading) returns (stream ServerMessage);
-}`
+SensorService to nazwa usługi oferowanej przez serwer. Każda metoda (rpc) określa:
 
-SensorService to nazwa usługi oferowanej przez serwer.
-- Każda metoda (rpc) określa:
 - nazwę RPC,
 - typ argumentu (po stronie klienta),
 - typ odpowiedzi (po stronie serwera).
 
-Możliwe tryby transmisji:
+```proto3
+service SensorService {
+  rpc SendSingleReading (SensorReading) returns (Ack);
+  rpc StreamSensorReadings (stream SensorReading) returns (Ack);
+  rpc GetSensorReadings (SensorRequest) returns (stream SensorReading);
+  rpc SensorChat (stream SensorReading) returns (stream ServerMessage);
+}
+```
+
+#### Możliwe typy wywołań RPC
+
 1. Unary: pojedyncze żądanie → pojedyncza odpowiedź
+
 - SendSingleReading(SensorReading) → Ack
-2.	Client streaming: strumień żądań → pojedyncza odpowiedź
+
+2. Client streaming: strumień żądań → pojedyncza odpowiedź
+
 - StreamSensorReadings(stream SensorReading) → Ack
-3.	Server streaming: pojedyncze żądanie → strumień odpowiedzi
+
+3. Server streaming: pojedyncze żądanie → strumień odpowiedzi
+
 - GetSensorReadings(SensorRequest) → stream SensorReading
-4.	Bidirectional streaming: strumień żądań ↔ strumień odpowiedzi
+
+4. Bidirectional streaming: strumień żądań ↔ strumień odpowiedzi
+
 - SensorChat(stream SensorReading) → stream ServerMessage
 
-`message SensorReading {
-  string sensor_id = 1;
-  double temperature = 2;
-  int64 timestamp = 3;
-}`
+#### Definicje wiadomości
 
 SensorReading reprezentuje odczyt z czujnika.
+
 - sensor_id (pole 1): unikalny identyfikator czujnika.
 - temperature (pole 2): wartość temperatury (zmiennoprzecinkowa).
 - timestamp (pole 3): znacznik czasu (liczba całkowita 64-bitowa), np. sekundy od epoki.
 
-`message Ack {
-  string message = 1;
-}`
+```proto3
+message SensorReading {
+  string sensor_id = 1;
+  double temperature = 2;
+  int64 timestamp = 3;
+}
+```
 
 Ack potwierdza otrzymanie danych, zawiera krótki komunikat tekstowy.
 
-`message SensorRequest {
-  string sensor_id = 1;
-}`
+```proto3
+message Ack {
+  string message = 1;
+}
+```
 
 SensorRequest to żądanie dotyczące konkretnego czujnika (np. pobranie historii odczytów)
 
-`message ServerMessage {
-  string message = 1;
-  int64 server_time = 2;
-}`
+```proto3
+message SensorRequest {
+  string sensor_id = 1;
+}
+```
 
 Komunikat serwera, wysyłany w trybie strumieniowym.
+
 - message: treść (np. status lub alert).
 - server_time: czas na serwerze (np. dla synchronizacji).
 
+```proto3
+message ServerMessage {
+  string message = 1;
+  int64 server_time = 2;
+}
+```
+
+### Opis aplikacji
+
+Aplikacja symuluje pobieranie odczytów z czujników temperatury oraz przesyłanie ich do centralnego serwera. Zarówno część serwerowa jak i kliencka napisane są w języku python. Dodatkowo dla bezpieczeństwa serwer wykorzystuje certyfikat SSL.
+
+#### Serwer
+
+Zadaniem serwera jest zbieranie danych pomiarowych z czujników oraz ich analiza (np. obliczanie średniej). Dane te mogą być następnie pobrane przez klientów. Serwer realizuje kontrakt określony w pliku .proto w następujący sposób:
+
+- SendSingleReading - zapisuje otrzymany odczyt w swojej pamięci podręcznej,
+- StreamSensorReadings - jak powyżej, jednak z większą liczbą pomiarów (przesyłanych jako stream),
+- GetSensorReadings - odsyła do klienta zapisane dane w formie streamu,
+- SensorChat - Serwer odbiera od klienta pomiary, jednocześnie odsyłając potwierdzenie o ich otrzymaniu
+
+#### Klient
+
+Zadaniem klienta jest symulacja działania czujników temperatury i przesyłanie pomiarów do serwera.
+
+Do celów symulacji, uruchomione zostaną 4 instancje klienckie, każda wykorzystująca inny typ wywołań RPC, opisany w sekcji opisującej serwer. Każdy z klientów periodycznie wysyła w losowych odstępach czasu odczytane wyniki pomiarów lub żądanie odczytu zapisanych na serwerze pomiarów.
 
 ### OTEL
 
@@ -142,31 +188,33 @@ Klient łączy się z serwerem gRPC poprzez bezpieczny kanał TLS, przekazując 
 ## Konfiguracja środowiska
 
 ## Sposób instalacji, uruchomienie środowiska
+
 1. Kopiowanie projektu na lokalny komputer
-   
-   ```git clone git@github.com:xramzesx/suu-project.git```
 
-3. Przejście do folderu z projektem
-   
-   ```cd suu-projekt/sensor_app```
+   `git clone git@github.com:xramzesx/suu-project.git`
 
-5. Instalacja wymaganych pakietów
-   
-   ``` pip install -r requirements.txt ```
+2. Przejście do folderu z projektem
 
-7. Generowanie certyfikatów
-   
-   ``` make generate_certs ```
+   `cd suu-projekt/sensor_app`
 
-9. Generowanie pliku proto
-    
-   ``` make generate_proto ```
+3. Instalacja wymaganych pakietów
 
-11. Uruchomienie kontenerów
-    
-    ``` docker compose up --build ```
+   `pip install -r requirements.txt`
+
+4. Generowanie certyfikatów
+
+   `make generate_certs`
+
+5. Generowanie pliku proto
+
+   `make generate_proto`
+
+6. Uruchomienie kontenerów
+
+   `docker compose up --build`
 
 W wyniku wykonania powyższej komendy zostaną zbudowane 4 kontenery:
+
 - grpc-client
 - grpc-server
 - sensor_app-grpc-client-1
