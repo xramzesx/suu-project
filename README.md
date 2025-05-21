@@ -186,6 +186,20 @@ W ramach studium przypadku implementujemy system zbierania odczytów z czujnikó
 Klient łączy się z serwerem gRPC poprzez bezpieczny kanał TLS, przekazując token w metadanych. Serwer zapisuje otrzymane odczyty w pamięci oraz emituje ślady i metryki przez OpenTelemetry. Liveness zapewnia grpc-health. Dane telemetryczne trafiają do Jaegera (traces) i Prometheusa (metrics), skąd Grafana wizualizuje dashboard.
 
 ## Konfiguracja środowiska
+### Wymagania wstępne
+- Python 3.10+
+- Docker & Docker Compose (wersja ≥ 1.29)
+- Make
+- Klient grpcurl (do testów ręcznych, opcjonalnie)
+  
+Wymagane pakiety pythonowe można znaleźć w pliku requirements.txt:
+```
+grpcio
+grpcio-tools
+grpcio-health-checking
+opentelemetry-sdk
+opentelemetry-instrumentation-grpc
+```
 
 ## Sposób instalacji, uruchomienie środowiska
 
