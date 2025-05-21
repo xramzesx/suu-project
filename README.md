@@ -188,12 +188,18 @@ Klient łączy się z serwerem gRPC poprzez bezpieczny kanał TLS, przekazując 
 ## Konfiguracja środowiska
 ### Wymagania wstępne
 - Python 3.10+
-
 - Docker & Docker Compose (wersja ≥ 1.29)
-
 - Make
-
 - Klient grpcurl (do testów ręcznych, opcjonalnie)
+  
+Wymagane pakiety pythonowe można znaleźć w pliku requirements.txt:
+```
+grpcio
+grpcio-tools
+grpcio-health-checking
+opentelemetry-sdk
+opentelemetry-instrumentation-grpc
+```
 
 ## Sposób instalacji, uruchomienie środowiska
 
