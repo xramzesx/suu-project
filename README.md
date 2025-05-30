@@ -24,6 +24,10 @@ gRPC to otwartoźródłowy framework RPC opracowany przez Google, który opiera 
 
 Python umożliwia łatwe tworzenie zarówno serwerów, jak i klientów gRPC. Za pomocą narzędzia grpcio-tools możliwe jest generowanie kodu klienta i serwera na podstawie plików .proto. Dzięki temu komunikacja między różnymi usługami i językami jest spójna oraz wydajna.
 
+## Opis aplikacji
+
+Aplikacja symuluje pobieranie odczytów z czujników temperatury oraz przesyłanie ich do centralnego serwera. Zarówno część serwerowa jak i kliencka napisane są w języku python. Dodatkowo dla bezpieczeństwa serwer wykorzystuje certyfikat SSL.
+
 ### Rodzaje wywołań / streamingu w gRPC
 
 #### Unary (request → response)
@@ -42,7 +46,7 @@ Python umożliwia łatwe tworzenie zarówno serwerów, jak i klientów gRPC. Za 
 
 - Obie strony wymieniają komunikaty niezależnie i równolegle.
 
-### Opisanie pliku proto
+### Plik proto
 
 Plik .proto opisuje interfejs usługi gRPC w wersji proto3 oraz formaty wiadomości, jakimi klient i serwer będą się ze sobą wymieniać. Poniżej omówienie jego poszczególnych elementów:
 
@@ -67,21 +71,25 @@ service SensorService {
 
 #### Możliwe typy wywołań RPC
 
-1. Unary: pojedyncze żądanie → pojedyncza odpowiedź
+- Unary: pojedyncze żądanie → pojedyncza odpowiedź
+```
+  SendSingleReading(SensorReading) → Ack
+```
 
-- SendSingleReading(SensorReading) → Ack
+- Client streaming: strumień żądań → pojedyncza odpowiedź
+```
+StreamSensorReadings(stream SensorReading) → Ack
+```
 
-2. Client streaming: strumień żądań → pojedyncza odpowiedź
+- Server streaming: pojedyncze żądanie → strumień odpowiedzi
+```
+GetSensorReadings(SensorRequest) → stream SensorReading
+```
 
-- StreamSensorReadings(stream SensorReading) → Ack
-
-3. Server streaming: pojedyncze żądanie → strumień odpowiedzi
-
-- GetSensorReadings(SensorRequest) → stream SensorReading
-
-4. Bidirectional streaming: strumień żądań ↔ strumień odpowiedzi
-
-- SensorChat(stream SensorReading) → stream ServerMessage
+- Bidirectional streaming: strumień żądań ↔ strumień odpowiedzi
+```
+SensorChat(stream SensorReading) → stream ServerMessage
+```
 
 #### Definicje wiadomości
 
@@ -127,11 +135,7 @@ message ServerMessage {
 }
 ```
 
-### Opis aplikacji
-
-Aplikacja symuluje pobieranie odczytów z czujników temperatury oraz przesyłanie ich do centralnego serwera. Zarówno część serwerowa jak i kliencka napisane są w języku python. Dodatkowo dla bezpieczeństwa serwer wykorzystuje certyfikat SSL.
-
-#### Serwer
+### Serwer
 
 Zadaniem serwera jest zbieranie danych pomiarowych z czujników oraz ich analiza (np. obliczanie średniej). Dane te mogą być następnie pobrane przez klientów. Serwer realizuje kontrakt określony w pliku .proto w następujący sposób:
 
@@ -140,7 +144,7 @@ Zadaniem serwera jest zbieranie danych pomiarowych z czujników oraz ich analiza
 - GetSensorReadings - odsyła do klienta zapisane dane w formie streamu,
 - SensorChat - Serwer odbiera od klienta pomiary, jednocześnie odsyłając potwierdzenie o ich otrzymaniu
 
-#### Klient
+### Klient
 
 Zadaniem klienta jest symulacja działania czujników temperatury i przesyłanie pomiarów do serwera.
 
@@ -164,7 +168,7 @@ W ramach studium przypadku implementujemy system zbierania odczytów z czujnikó
 
 <!---
 ┌────────────┐          TLS + token          ┌────────────────────┐
-│  Sensor 🟦 │  ───────────────────────────▶ │  gRPC‑Server 🟩     │
+│  Sensor 🟦 │  ───────────────────────────▶ │  gRPC‑Server 🟩    │
 │   Client   │    unary / streaming         │  • walidacja token │
 │            │     + health‑check           │  • baza in‑memory  │
 └────────────┘ ◀─────────────────────────── │  • OTel tracing    │
@@ -235,7 +239,14 @@ W wyniku wykonania powyższej komendy zostaną zbudowane 4 kontenery:
 - sensor_app-grpc-server-1
 
 ## Użycie AI w projekcie
+ASCII art przedstawiający architekturę rozwiązania, został wygenerowany przy użyciu Chat-GPT o4-mini. Wykorzystane zapytanie:
+```
+Mamy aplikacje która składa się z sensor client i serwera grpc połączonych tls z tokenem w metadanych, klient wysyła odczyty temperatury .serwer odpowiada potwierdzeniami i udostępnia  dane jako stream lub bidirectional. Serwer waliduje token, przechowuje dane w pamięci i instrumentuje swoje metody z otel, emitując ślady i metryki. Ślady są eksportowane protokołem otlp do jaeger, a metryki do prometheusa, a grafana buduje z nich dashboardy. Health check grpc zapewnia automatyczny monitoring dostępności usługi. Wygeneruj mi ascii art przedstawiający tą architekturę w formie graficznej
+```
 
 ## Podsumowanie
 
 ## Referencje
+- https://opentelemetry.io/docs/ - Dokumentacja OpenTelemetry
+- https://grpc.io/docs/languages/python/ - Dokumentacja wykorzystania gRPC z językiem Python
+- https://prometheus.io/docs/visualization/grafana/ - Dokumentacja integracji systemu Prometheus z Grafaną
