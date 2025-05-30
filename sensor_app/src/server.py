@@ -44,7 +44,7 @@ class SensorService(sensor_pb2_grpc.SensorServiceServicer):
 
 
 def serve():
-    setup_tracing()
+    setup_tracing('server')
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(SensorService(), server)
     add_health_check(server)
