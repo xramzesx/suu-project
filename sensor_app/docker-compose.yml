@@ -3,8 +3,12 @@ version: "3.9"
 networks:
   grpc-network:
 
+volumes:
+  prometheus_data:
+
 services:
   grpc-server:
+    container_name: grpc-server
     build:
       context: .
       dockerfile: Dockerfile
@@ -16,9 +20,11 @@ services:
       - ./certs:/app/certs
     environment:
       - GRPC_VERBOSITY=debug
+      - COLLECTOR_ADDRESS=otel-collector
     command: src/server.py
 
   grpc-client:
+    # container_name: grpc-client
     build:
       context: .
       dockerfile: Dockerfile
@@ -30,4 +36,70 @@ services:
       - ./certs:/app/certs
     environment:
       - GRPC_VERBOSITY=debug
+      - COLLECTOR_ADDRESS=otel-collector
     command: src/client.py
+    deploy:
+      replicas: 3
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"     # gRPC receiver (OTLP)
+      - "4318:4318"     # HTTP receiver (OTLP)
+      - "55681:55681"   # legacy (optional)
+      - "8888:8888"     # metrics (Prometheus scrape)
+      - "9091:9090"     # metrics (Prometheus scrape)
+      - "13133:13133"   # health check
+    depends_on:
+      - jaeger
+      - prometheus
+    networks:
+        - grpc-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"   # UI
+      - "14268:14268"   # HTTP collector
+      - "14250:14250"   # gRPC collector
+    networks:
+        - grpc-network
+
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - 9090:9090
+    expose:
+      - 9090
+    networks:
+      - grpc-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+    networks:
+        - grpc-network
