@@ -15,11 +15,11 @@ import os
 
 COLLECTOR_ADDRESS= f"http://{os.getenv('COLLECTOR_ADDRESS')}:4317"
 
-def setup_tracing(side):
+def setup_tracing(side, name):
     # Tracing config
 
     trace.set_tracer_provider(TracerProvider())
-    tracer = trace.get_tracer_provider().get_tracer(__name__)
+    tracer = trace.get_tracer_provider().get_tracer(name)
     
     span_exporter = OTLPSpanExporter(endpoint=COLLECTOR_ADDRESS, insecure=True)
     processor = BatchSpanProcessor(span_exporter)
@@ -29,7 +29,7 @@ def setup_tracing(side):
     metric_exporter = OTLPMetricExporter(endpoint=COLLECTOR_ADDRESS, insecure=True)
     reader = PeriodicExportingMetricReader(metric_exporter)
     metrics.set_meter_provider(MeterProvider(metric_readers=[reader]))
-    meter = metrics.get_meter(__name__)
+    meter = metrics.get_meter(name)
 
     if side == 'client':
         GrpcInstrumentorClient().instrument()
