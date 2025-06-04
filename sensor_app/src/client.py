@@ -1,7 +1,7 @@
 import grpc
 from proto import sensor_pb2, sensor_pb2_grpc
 import time
-import tracing
+import telemetry
 import random
 
 def get_random_temperature():
@@ -57,8 +57,8 @@ if __name__ == "__main__":
     stub = sensor_pb2_grpc.SensorServiceStub(channel)
     metadata = [("authorization", "sensor_token_abc")]
 
-    tracing.setup_tracing('client')
-    tracing.setup_metrics('client')
+    telemetry.setup_tracing('client')
+    telemetry.setup_metrics('client')
 
     while True:
         choosen_request = random.randint(0, 3)

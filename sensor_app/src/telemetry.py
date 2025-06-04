@@ -12,13 +12,9 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
 import grpc_observability
-
-import os
-
-COLLECTOR_ADDRESS= f"http://{os.getenv('COLLECTOR_ADDRESS')}:4317"
 
 CLIENT_SIDE = 'client'
 SERVER_SIDE = 'server'

@@ -20,7 +20,6 @@ services:
       - ./certs:/app/certs
     environment:
       - GRPC_VERBOSITY=debug
-      - COLLECTOR_ADDRESS=otel-collector
       - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
     command: src/server.py
 
@@ -37,7 +36,6 @@ services:
       - ./certs:/app/certs
     environment:
       - GRPC_VERBOSITY=debug
-      - COLLECTOR_ADDRESS=otel-collector
       - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
     command: src/client.py
     deploy:
