@@ -1,5 +1,3 @@
-# Środowiska Udostępniania Usług - projekt
-
 Temat projektu: Python - gRPC - OTel
 
 Autorzy: Michał Bert, Jakub Kędra, Aleksandra Sobiesiak, Adrian Stahl
@@ -165,29 +163,10 @@ OpenTelemetry dla Pythona zapewnia natywną integrację m.in. z frameworkami sie
 W ramach studium przypadku implementujemy system zbierania odczytów z czujników temperatury. Aplikację budujemy w architekturze klient–serwer, korzystając z gRPC, a dane telemetryczne eksportujemy do Jaegera (traces) oraz Prometheusa/Grafany (metrics).
 
 ## Architektura rozwiązania
-
-<!---
-┌────────────┐          TLS + token          ┌────────────────────┐
-│  Sensor 🟦 │  ───────────────────────────▶ │  gRPC‑Server 🟩    │
-│   Client   │    unary / streaming         │  • walidacja token │
-│            │     + health‑check           │  • baza in‑memory  │
-└────────────┘ ◀─────────────────────────── │  • OTel tracing    │
-         ▲        stream(response)          │     & metrics      │
-         │                                   └─────────┬────────┘
-         │                                             │ OTLP
-         │                                             ▼
-         │                                      ┌───────────────┐
-         │                                      │  Jaeger UI    │
-         │                                      └───────────────┘
-         │ metrics                               ▲
-         ▼                                       │
-┌─────────────────┐                              │
-│ Prometheus/Graf │◀─────────────────────────────┘
-└─────────────────┘
--->
-<img width="512" alt="image" src="https://github.com/user-attachments/assets/d2368f4d-c7da-405a-b466-a4a31a57a3cd" />
-
-Klient łączy się z serwerem gRPC poprzez bezpieczny kanał TLS, przekazując token w metadanych. Serwer zapisuje otrzymane odczyty w pamięci oraz emituje ślady i metryki przez OpenTelemetry. Liveness zapewnia grpc-health. Dane telemetryczne trafiają do Jaegera (traces) i Prometheusa (metrics), skąd Grafana wizualizuje dashboard.
+![architecture](https://github.com/user-attachments/assets/ecf67907-1df0-4271-b907-5925255b1ae0)
+Powyższy diagram przedstawia główne komponenty aplikacji oraz sposób, w jaki ze sobą współpracują w ramach sieci Dockerowej (grpc-network):
+- Czarna przerywana linia - sieć dockerowa
+- Kolorowe przerywane linie - kontenery dockerowe
 
 ## Konfiguracja środowiska
 ### Wymagania wstępne
@@ -200,9 +179,13 @@ Wymagane pakiety pythonowe można znaleźć w pliku requirements.txt:
 ```
 grpcio
 grpcio-tools
+grpcio-observability
 grpcio-health-checking
 opentelemetry-sdk
 opentelemetry-instrumentation-grpc
+opentelemetry-exporter-jaeger
+opentelemetry-exporter-otlp
+protobuf==3.20.3
 ```
 
 ## Sposób instalacji, uruchomienie środowiska
@@ -215,34 +198,28 @@ opentelemetry-instrumentation-grpc
 
    `cd suu-projekt/sensor_app`
 
-3. Instalacja wymaganych pakietów
-
-   `pip install -r requirements.txt`
-
-4. Generowanie certyfikatów
+3. Generowanie certyfikatów
 
    `make generate_certs`
 
-5. Generowanie pliku proto
-
-   `make generate_proto`
-
-6. Uruchomienie kontenerów
+4. Uruchomienie kontenerów
 
    `docker compose up --build`
 
-W wyniku wykonania powyższej komendy zostaną zbudowane 4 kontenery:
+W wyniku wykonania powyższej komendy zostaną zbudowane poniższe kontenery:
 
-- grpc-client
 - grpc-server
-- sensor_app-grpc-client-1
-- sensor_app-grpc-server-1
+- grpc-client-1
+- grpc-client-2
+- grpc-client-3
+- otel-collector
+- prometheus
+- grafana
+- jaeger-1
 
 ## Użycie AI w projekcie
-ASCII art przedstawiający architekturę rozwiązania, został wygenerowany przy użyciu Chat-GPT o4-mini. Wykorzystane zapytanie:
-```
-Mamy aplikacje która składa się z sensor client i serwera grpc połączonych tls z tokenem w metadanych, klient wysyła odczyty temperatury .serwer odpowiada potwierdzeniami i udostępnia  dane jako stream lub bidirectional. Serwer waliduje token, przechowuje dane w pamięci i instrumentuje swoje metody z otel, emitując ślady i metryki. Ślady są eksportowane protokołem otlp do jaeger, a metryki do prometheusa, a grafana buduje z nich dashboardy. Health check grpc zapewnia automatyczny monitoring dostępności usługi. Wygeneruj mi ascii art przedstawiający tą architekturę w formie graficznej
-```
+Wykonano kilka zapytań przy użyciu Chat-GPT o4-mini, w celu wygenerowania schematu architektury systemu na podstawie pliku docker-compose, jednak wyniki nie były wystarczająco dobre, aby wykorzystać je w projekcie.
+
 
 ## Podsumowanie
 
