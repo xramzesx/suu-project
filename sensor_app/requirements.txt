@@ -1,7 +1,9 @@
 grpcio
 grpcio-tools
+grpcio-observability
 grpcio-health-checking
 opentelemetry-sdk
 opentelemetry-instrumentation-grpc
 opentelemetry-exporter-jaeger
 opentelemetry-exporter-otlp
+protobuf==3.20.3

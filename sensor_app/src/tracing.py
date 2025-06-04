@@ -1,42 +1,77 @@
-from opentelemetry import trace, metrics
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.instrumentation.grpc import (
     GrpcInstrumentorServer,
-    GrpcInstrumentorClient,
+    GrpcInstrumentorClient
 )
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
 from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader, ConsoleMetricExporter
+
+import grpc_observability
+
 import os
 
 COLLECTOR_ADDRESS= f"http://{os.getenv('COLLECTOR_ADDRESS')}:4317"
 
-def setup_tracing(side, name):
-    # Tracing config
+CLIENT_SIDE = 'client'
+SERVER_SIDE = 'server'
 
-    trace.set_tracer_provider(TracerProvider())
-    tracer = trace.get_tracer_provider().get_tracer(name)
+OTEL_EXPORT_INTERVAL_MS = 1000
+
+def get_resource(side):
     
-    span_exporter = OTLPSpanExporter(endpoint=COLLECTOR_ADDRESS, insecure=True)
-    processor = BatchSpanProcessor(span_exporter)
-    trace.get_tracer_provider().add_span_processor(processor)
+    service_name = ""
 
-    # Metrics config
-    metric_exporter = OTLPMetricExporter(endpoint=COLLECTOR_ADDRESS, insecure=True)
-    reader = PeriodicExportingMetricReader(metric_exporter)
-    metrics.set_meter_provider(MeterProvider(metric_readers=[reader]))
-    meter = metrics.get_meter(name)
+    if side == CLIENT_SIDE:
+        service_name = "client-side"
+    elif side == SERVER_SIDE:
+        service_name = "server-side"
+    else:
+        raise Exception(f"Invalid connection side: {side}")
+
+    return Resource.create(attributes={
+        SERVICE_NAME: service_name
+    })
+
+
+def setup_tracing(side):
+
+    resource = get_resource(side)
+    
+    tracerProvider = TracerProvider(resource=resource)
+    processor = BatchSpanProcessor(OTLPSpanExporter(insecure= True))
+    tracerProvider.add_span_processor(processor)
+    trace.set_tracer_provider(tracerProvider)
 
     if side == 'client':
         GrpcInstrumentorClient().instrument()
     elif side == 'server':
         GrpcInstrumentorServer().instrument()
     else:
-        raise Exception("Connection side not specified")
+        raise Exception(f"Invalid connection side: {side}")
 
 
-    return tracer
+def setup_metrics(side):
+    resource = get_resource(side)
+
+    otel_exporter = OTLPMetricExporter(insecure = True)
+    reader = PeriodicExportingMetricReader(
+        exporter=otel_exporter,
+        export_interval_millis=OTEL_EXPORT_INTERVAL_MS,
+    )
+    provider = MeterProvider(
+        metric_readers=[reader], 
+        resource=resource
+    )
+    otel_plugin = grpc_observability.OpenTelemetryPlugin(
+        meter_provider=provider
+    )
+    otel_plugin.register_global()
+    

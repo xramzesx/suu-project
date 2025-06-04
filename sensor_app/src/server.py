@@ -1,11 +1,15 @@
-import grpc
+from collections import defaultdict
 from concurrent import futures
+import grpc
 import time
+
 from proto import sensor_pb2, sensor_pb2_grpc
 from health_check import add_health_check
-from tracing import setup_tracing
+from tracing import setup_tracing, setup_metrics
 from auth import check_token
 
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 
 class SensorService(sensor_pb2_grpc.SensorServiceServicer):
     def __init__(self):
@@ -44,7 +48,9 @@ class SensorService(sensor_pb2_grpc.SensorServiceServicer):
 
 
 def serve():
-    setup_tracing('server', __name__)
+    setup_tracing('server')
+    setup_metrics('server')
+
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     sensor_pb2_grpc.add_SensorServiceServicer_to_server(SensorService(), server)
     add_health_check(server)

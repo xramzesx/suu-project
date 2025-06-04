@@ -57,7 +57,8 @@ if __name__ == "__main__":
     stub = sensor_pb2_grpc.SensorServiceStub(channel)
     metadata = [("authorization", "sensor_token_abc")]
 
-    tracing.setup_tracing('client', __name__)
+    tracing.setup_tracing('client')
+    tracing.setup_metrics('client')
 
     while True:
         choosen_request = random.randint(0, 3)
