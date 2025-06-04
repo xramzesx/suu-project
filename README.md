@@ -222,6 +222,31 @@ Wykonano kilka zapytań przy użyciu Chat-GPT o4-mini, w celu wygenerowania sche
 
 
 ## Podsumowanie
+W wyniku uruchomienia projektu, otrzymujemy:
+
+### Traces w Jaeger UI
+Jaeger UI jest dostępny pod adresem http://localhost:16686
+<img width="1423" alt="image" src="https://github.com/user-attachments/assets/93c3659e-d2b8-4aee-82bd-5831eb087818" />
+
+
+### Metryki w Prometheus
+Prometheus jest dostępny pod adresem http://localhost:9090
+<img width="1423" alt="image" src="https://github.com/user-attachments/assets/5bdf2ce2-efde-40df-92ff-322bd99c6479" />
+<img width="1422" alt="image" src="https://github.com/user-attachments/assets/28fffea4-df6f-4409-a958-d0347081e10b" />
+
+
+### Grafana
+Grafana jest dostępna pod adresem http://localhost:3000
+Aby się zalogować należy podać login i hasło: admin, admin
+
+Możemy skonfigurować Prometheus jako źródło danych dla wykresów:
+<img width="1427" alt="image" src="https://github.com/user-attachments/assets/fb407b3f-2f4c-4ea0-8c3e-210f1294dfa6" />
+Przykładowy wykres z wykorzystaniem metryki 
+```
+grpc_server_call_duration_seconds_count
+```
+<img width="1425" alt="image" src="https://github.com/user-attachments/assets/bff422ae-3af0-4f13-a315-26390b086a37" />
+
 
 ## Referencje
 - https://opentelemetry.io/docs/ - Dokumentacja OpenTelemetry
