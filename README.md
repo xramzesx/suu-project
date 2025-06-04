@@ -250,3 +250,4 @@ Mamy aplikacje która składa się z sensor client i serwera grpc połączonych 
 - https://opentelemetry.io/docs/ - Dokumentacja OpenTelemetry
 - https://grpc.io/docs/languages/python/ - Dokumentacja wykorzystania gRPC z językiem Python
 - https://prometheus.io/docs/visualization/grafana/ - Dokumentacja integracji systemu Prometheus z Grafaną
+- https://opentelemetry.io/docs/collector/ - Dokumentacja OpenTelemetry Collector
