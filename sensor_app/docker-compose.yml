@@ -21,6 +21,7 @@ services:
     environment:
       - GRPC_VERBOSITY=debug
       - COLLECTOR_ADDRESS=otel-collector
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
     command: src/server.py
 
   grpc-client:
@@ -37,6 +38,7 @@ services:
     environment:
       - GRPC_VERBOSITY=debug
       - COLLECTOR_ADDRESS=otel-collector
+      - OTEL_EXPORTER_OTLP_ENDPOINT=otel-collector:4317
     command: src/client.py
     deploy:
       replicas: 3
